@@ -808,6 +808,14 @@ void setup()
   Serial.print((int)sizeof(block_t)*BLOCK_BUFFER_SIZE);
   showString(PSTR(" / "));
   Serial.println(BLOCK_BUFFER_SIZE);
+
+#ifdef PHOTOGRAPH_PIN
+	#if (PHOTOGRAPH_PIN > -1)
+	  SET_OUTPUT(PHOTOGRAPH_PIN);
+	  WRITE(PHOTOGRAPH_PIN, LOW);
+	#endif
+#endif
+
 }
 
 
@@ -1691,6 +1699,41 @@ FORCE_INLINE void process_commands()
         }
       }
       break;
+
+	case 240: // M240
+	        // Triggers a camera by emulating a Canon RC-1 Remote
+	        // Data from: http://www.doc-diy.net/photo/rc-1_hacked/
+	        #ifdef PHOTOGRAPH_PIN
+	        #if (PHOTOGRAPH_PIN > -1)
+	       //  #define NUM_PULSES 16
+	      //   #define PULSE_LENGTH 0.01524
+	      //   for(int i=0; i < NUM_PULSES; i++) {
+	      //     WRITE(PHOTOGRAPH_PIN, HIGH);
+	      //     _delay_ms(PULSE_LENGTH);
+	       //    WRITE(PHOTOGRAPH_PIN, LOW);
+	       //    _delay_ms(PULSE_LENGTH);
+	       //  }
+	      //   _delay_ms(7.33);
+	       //  for(int i=0; i < NUM_PULSES; i++) {
+		WRITE(PHOTOGRAPH_PIN, HIGH);
+	       //    _delay_ms(PULSE_LENGTH);
+	        //   WRITE(PHOTOGRAPH_PIN, LOW);
+	        //   _delay_ms(PULSE_LENGTH);
+	        }
+	        #endif
+	        #endif
+	        break;
+	
+			case 241: // M241
+		        // Triggers a camera by emulating a Canon RC-1 Remote
+		        // Data from: http://www.doc-diy.net/photo/rc-1_hacked/
+		        #ifdef PHOTOGRAPH_PIN
+		       	 #if (PHOTOGRAPH_PIN > -1)
+						WRITE(PHOTOGRAPH_PIN, LOW);
+			        #endif
+		        #endif
+	        break;
+
 #ifdef USE_EEPROM_SETTINGS
       case 500: // Store settings in EEPROM
       {

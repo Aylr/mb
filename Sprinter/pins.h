@@ -546,6 +546,8 @@
 #endif
 
 
+#define PHOTOGRAPH_PIN     49
+
 #endif
 /****************************************************************************************
 * Duemilanove w/ ATMega328P pin assignment
