@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>MyBar</title>
+	<link rel="stylesheet" href="jquery-ui-1.8.23.custom/css/ui-lightness/jquery-ui-1.8.23.custom.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	
+<style type="text/css">
+	div.wrapper {
+		float:left;
+		width: 50px;
+	}
+	div#output {
+		position:fixed;
+		top:20px;
+		left: 500px;
+		border:1px solid #dcdcdc;
+		padding: 20px;
+	}
+	textarea.final_output {
+		width: 200px;
+		height: 300px;
+	}
+	textarea.gcode_line {
+		width: 200px;
+		height:50px;
+	}
+	div.wrapper input {
+		border:0;
+		color:#f6931f;
+		font-weight:bold;
+	}
+	div.gcodeLine {
+		clear:both;
+	}
+	div.slider {
+		height:200px;
+	}
+	div.y {
+		width: 80px;
+	}
+	div.y div.slider {
+		height: 15px;
+		width: 50px;
+		margin-top:20px;
+	}
+</style>
+<script src="jquery-ui-1.8.23.custom/js/jquery-1.8.0.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="jquery-ui-1.8.23.custom/js/jquery-ui-1.8.23.custom.min.js" type="text/javascript" charset="utf-8"></script>
+
+<!--
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+-->
+<script>
+$(function(){//shortcut for doc.ready
+	
+	//page-building loops
+	//for(i=1,i<20,i++){
+	//	$("div.gcodeLine").clone().appendTo("div#controls");
+	//};
+	
+	//gcode prefix
+	gcode_prefix = "G28 X Y\nG90\n";//home and absolute positioning
+	$("textarea.gcode_prefix").html(gcode_prefix);
+	$("textarea.gcode_prefix").change(function(){
+		build_single_line();
+	});
+	
+	$("div.speed div.slider" ).slider({
+		orientation: "vertical",
+		range: "min",
+		min: 0,
+		max: 22000,
+		value: 0,
+		slide: function( event, ui ) {
+			$("div.speed input").val(ui.value);
+			build_single_line();
+		}
+	});
+
+
+	$("div.x div.slider" ).slider({
+		orientation: "vertical",
+		range: "min",
+		min: 0,
+		max: 620,
+		value: 0,
+		slide: function( event, ui ) {
+			$("div.x input").val(ui.value);
+			build_single_line();
+		}
+	});
+	$("div.x input").val($("div.x div.slider").slider("value"));
+	
+	$("div.y div.slider" ).slider({
+		orientation: "horizontal",
+		range: "min",
+		min: 0,
+		max: 32,
+		value: 0,
+		slide: function( event, ui ) {
+			$("div.y input").val(ui.value);
+			build_single_line();
+		}
+	});
+	$("div.y input").val($("div.y div.slider").slider("value"));
+	
+	$("div.dwell div.slider" ).slider({
+		orientation: "vertical",
+		range: "min",
+		min: 0,
+		max: 5000,
+		value: 0,
+		slide: function( event, ui ) {
+			$("div.dwell input").val(ui.value);
+			build_single_line();
+		}
+	});
+	$("div.dwell input").val($("div.dwell div.slider").slider("value"));
+	
+	function build_single_line(){
+		tempfile = "";
+		tempfile += $("textarea.gcode_prefix").val();
+		//tempfile += gcode_prefix;
+		
+		$("div.gcodeLine").each(function(){
+			temp_dwell = 0;
+			temp_speed = 0;
+			temp_x = 0;
+			temp_y = 0;
+			templine ="";
+			
+			temp_speed = $(this).children().first().next().children().last().slider("value"); //speed
+			temp_x = $(this).children().first().next().next().children().last().slider("value");//X
+			temp_y = $(this).children().first().next().next().next().children().last().slider("value");//Y
+			temp_dwell = $(this).children().first().next().next().next().next().children().last().slider("value");//dwell
+			
+			
+			if(temp_speed > 0){
+				templine += "G1 F";
+				templine +=  temp_speed;
+				templine += "\n";
+			}
+			if((temp_x > 0) || (temp_y > 0)){
+				templine += "G1"
+			}
+			if(temp_x > 0){
+				templine += " X";
+				templine += temp_x;
+			}
+			if(temp_y > 0){
+				templine += " Y"
+				templine += temp_y
+			}
+			if((temp_x > 0) || (temp_y > 0)){
+				templine += "\n"
+			}
+			if(temp_dwell > 0){
+				templine += "G4 P"
+				templine += temp_dwell;//dwell
+			}
+			$(this).children().last().html(templine);
+			
+			tempfile += templine + "\n";
+			$("textarea.final_output").html(tempfile);
+			
+		});
+	}		
+
+});//doc.ready
+</script>
+</head>
+
+<body>
+
+	<div id="controls">
+		<h2>Controls</h2>
+		<h3>GCODE PRE-fix</h3>
+		
+		<textarea class="gcode_prefix"></textarea>
+		
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		
+		
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+		<div class="gcodeLine">	
+			<h3>Move 1</h3>
+			<div class="wrapper speed">
+				<label>Speed:</label>
+				<input type="text" class="speed_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper x">
+				<label>X:</label>
+				<input type="text" class="x_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper y">
+				<label>Y:</label>
+				<input type="text" class="y_input" />
+				<div class="slider"></div>
+			</div>
+			<div class="wrapper dwell">
+				<label>Dwell:</label>
+				<input type="text" />
+				<div class="slider"></div>
+			</div>
+			<textarea class="gcode_line"></textarea>
+		</div>
+
+		<input type="button" id="addLine" name="addline" value="+ Add Line"/>
+		<input type="button" id="removeLine" name="removeline" value="- Remove Line"/>
+	</div>
+	
+	<div id="output">
+		<h2>Final gode</h2>
+		<p>Copy and paste this into your .gcode file</p>
+		<textarea class="final_output">gcode goes here</textarea>
+	</div>
+
+</body>
+</html>
